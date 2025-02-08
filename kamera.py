@@ -2,9 +2,8 @@
 import time
 import requests
 import RPi.GPIO as GPIO
-from libcamera import controls
-from libcamera import CameraManager
 import subprocess
+import os
 
 BUTTON_GPIO = 4
 SERVER_URL = 'http://147.185.221.25:35182/upload'
@@ -15,21 +14,24 @@ GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(BUTTON_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-# Konfiguracja kamery libcamera
+# Funkcja do robienia zdjęcia i nadpisywania pliku
 def capture_image():
     print("Robię zdjęcie...")
     try:
-        # Użycie natywnego polecenia `libcamera-still` do przechwycenia obrazu
+        # Usunięcie starego pliku (zapewnia nadpisanie)
+        if os.path.exists(IMAGE_PATH):
+            os.remove(IMAGE_PATH)
+
+        # Wykonanie zdjęcia i nadpisanie pliku z automatycznym ISO i ekspozycją
         subprocess.run([
             "libcamera-still",
             "--width", "2592", "--height", "1944",  # Maksymalna rozdzielczość
-            "--shutter", "10000",  # Czas naświetlania w mikrosekundach (zwiększ jeśli obraz nadal jest ciemny)
-            "--gain", "2.0",  # ISO (możesz spróbować wyższych wartości, np. 4.0)
             "--awb", "auto",  # Automatyczny balans bieli
             "--quality", "100",  # Maksymalna jakość JPEG
+            "--flush",  # Wymusza zapis na dysk i nadpisanie
             "--output", IMAGE_PATH  # Zapis obrazu do pliku
         ])
-        print("Zdjęcie zapisane.")
+        print("Zdjęcie zapisane jako:", IMAGE_PATH)
     except Exception as e:
         print(f"Błąd przy robieniu zdjęcia: {e}")
         return False
