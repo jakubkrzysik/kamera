@@ -1,29 +1,26 @@
 #!/usr/bin/env python3
 import time
 import requests
-import cv2
 import RPi.GPIO as GPIO
 from picamera2 import Picamera2
 
 BUTTON_GPIO = 4
-SERVER_URL = 'http://147.185.221.25:35182/upload'  # Upewnij się, że adres IP i port są poprawne
-IMAGE_PATH = "/home/pi/captured_image.jpg"  # Tymczasowy plik obrazu
+SERVER_URL = 'http://147.185.221.25:35182/upload'
+IMAGE_PATH = "/home/pi/captured_image.jpg"
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(BUTTON_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 picam2 = Picamera2()
-config = picam2.create_still_configuration(main={"size": (2592, 1944)})
+config = picam2.create_still_configuration(main={"size": (2592, 1944)}, lores={"size": (640, 480)}, display="lores")
 picam2.configure(config)
 picam2.start()
 
 def capture_and_send():
     print("Robię zdjęcie...")
     try:
-        image = picam2.capture_array()
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Poprawka kolorów: BGR → RGB
-        cv2.imwrite(IMAGE_PATH, image, [cv2.IMWRITE_JPEG_QUALITY, 100])  # Zapisz jako JPG z maksymalną jakością
+        picam2.capture_file(IMAGE_PATH, format="jpeg")  # Zapis obrazu natywnie w formacie JPEG
     except Exception as e:
         print("Błąd przy przechwytywaniu obrazu:", e)
         return
