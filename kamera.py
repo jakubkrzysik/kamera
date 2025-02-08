@@ -7,7 +7,7 @@ import RPi.GPIO as GPIO
 from picamera2 import Picamera2
 
 BUTTON_GPIO = 4
-SERVER_URL = 'http://192.168.1.100:5000/upload'
+SERVER_URL = 'http://147.185.221.25:35182upload'
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
@@ -25,7 +25,8 @@ def capture_and_send():
     except Exception as e:
         print("Błąd przy przechwytywaniu obrazu:", e)
         return
-    ret, jpeg = cv2.imencode('.jpg', image)
+    # Ustawienie jakości JPEG na 100 (minimalna kompresja, maksymalna jakość)
+    ret, jpeg = cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 100])
     if not ret:
         print("Błąd przy kodowaniu obrazu do JPEG!")
         return
