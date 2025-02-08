@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 import time
-import base64
 import requests
 import cv2
 import RPi.GPIO as GPIO
 from picamera2 import Picamera2
 
 BUTTON_GPIO = 4
-SERVER_URL = 'http://147.185.221.25:35182/upload'
+SERVER_URL = 'http://147.185.221.25:35182/upload'  # Upewnij się, że adres IP i port są poprawne
+IMAGE_PATH = "/home/pi/captured_image.jpg"  # Tymczasowy plik obrazu
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
@@ -23,22 +23,16 @@ def capture_and_send():
     try:
         image = picam2.capture_array()
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Poprawka kolorów: BGR → RGB
+        cv2.imwrite(IMAGE_PATH, image, [cv2.IMWRITE_JPEG_QUALITY, 100])  # Zapisz jako JPG z maksymalną jakością
     except Exception as e:
         print("Błąd przy przechwytywaniu obrazu:", e)
         return
     
-    # Ustawienie jakości JPEG na 100 (maksymalna jakość, minimalna kompresja)
-    ret, jpeg = cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 100])
-    if not ret:
-        print("Błąd przy kodowaniu obrazu do JPEG!")
-        return
-    
-    jpeg_bytes = jpeg.tobytes()
-    encoded_image = base64.b64encode(jpeg_bytes).decode('utf-8')
-    payload = {"image": encoded_image, "timestamp": time.time()}
-    
+    # Wysłanie obrazu jako plik multipart/form-data
     try:
-        response = requests.post(SERVER_URL, json=payload)
+        with open(IMAGE_PATH, 'rb') as img_file:
+            files = {'image': img_file}
+            response = requests.post(SERVER_URL, files=files)
         print("Obraz wysłany. Odpowiedź serwera:", response.text)
     except Exception as e:
         print("Błąd przy wysyłaniu obrazu:", e)
